@@ -86,37 +86,50 @@ class Order:
             wallet_address
         )
 
-        raw_txn = self._exchange_router_contract_obj.functions.multicall(
+        # Build the transaction dictionary without gas
+        txn_dict = {
+            'value': value_amount,
+            'chainId': self.config.chain_id,
+            'maxFeePerGas': int(self.max_fee_per_gas),
+            'maxPriorityFeePerGas': 0,
+            'nonce': nonce,
+            'from': wallet_address  # Include the 'from' address
+        }
+    
+        # Build the transaction using the contract's multicall function
+        transaction = self._exchange_router_contract_obj.functions.multicall(
             multicall_args
-        ).build_transaction(
-            {
-                'value': value_amount,
-                'chainId': self.config.chain_id,
-
-                # TODO - this is NOT correct
-                'gas': (
-                    self._gas_limits_order_type.call(
-                    ) + self._gas_limits_order_type.call()
-                ),
-                'maxFeePerGas': int(self.max_fee_per_gas),
-                'maxPriorityFeePerGas': 0,
-                'nonce': nonce
-            }
-        )
-
+        ).build_transaction(txn_dict)
+    
+        # Estimate gas
+        gas_estimate = self._connection.eth.estimate_gas(transaction)
+        self.log.info(f"Gas estimate: {gas_estimate}")
+    
+        # Add buffer to gas estimate
+        transaction['gas'] = int(gas_estimate * 1.2)  # Add 20% buffer
+    
         if not self.debug_mode:
             signed_txn = self._connection.eth.account.sign_transaction(
-                raw_txn, self.config.private_key
+                transaction, self.config.private_key
             )
-            tx_hash = self._connection.eth.send_raw_transaction(
-                signed_txn.rawTransaction
-            )
-            self.log.info("Txn submitted!")
-            self.log.info(
-                "Check status: https://arbiscan.io/tx/{}".format(tx_hash.hex())
-            )
-
-            self.log.info("Transaction submitted!")
+            try:
+                tx_hash = self._connection.eth.send_raw_transaction(
+                    signed_txn.raw_transaction
+                )
+                self.log.info("Txn submitted!")
+                self.log.info(
+                    "Check status: https://arbiscan.io/tx/{}".format(tx_hash.hex())
+                )
+            except Exception as e:
+                self.log.error(f"Failed to send transaction: {str(e)}")
+                return
+    
+            # Wait for transaction receipt to check if it was successful
+            receipt = self._connection.eth.wait_for_transaction_receipt(tx_hash)
+            if receipt.status == 0:
+                self.log.error("Transaction failed or was reverted.")
+            else:
+                self.log.info("Transaction succeeded!")
 
     def _get_prices(
         self, decimals: float, prices: float, is_open: bool = False,
@@ -198,9 +211,9 @@ class Order:
         else:
 
             # 20% buffer
-            execution_fee = int(execution_fee * 1.3)
+            execution_fee = int(execution_fee * 1.2)
 
-        markets = Markets(self.config).info
+        markets = Markets(self.config).get_available_markets()
         initial_collateral_delta_amount = self.initial_collateral_delta_amount
         prices = OraclePrices(chain=self.config.chain).get_recent_prices()
         size_delta_price_price_impact = self.size_delta
