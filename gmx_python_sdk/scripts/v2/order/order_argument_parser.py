@@ -281,13 +281,19 @@ class OrderArgumentParser:
             address of collateral token.
 
         """
-
         market_key = self.parameters_dict['market_key']
-
+        market = self.markets.get(market_key)
+        if market is None:
+            self.log.error(f"Market with key {market_key} not found.")
+            return False
+        
+        # Check if the market is live
+        if not market.get('is_live', True):
+            self.log.error(f"Market {market_key} is not live.")
+            return False
+        
         if self.parameters_dict['market_key'] == "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f":
             market_key = "0x47c031236e19d024b42f8AE6780E44A573170703"
-
-        market = self.markets
 
         # if collateral address doesnt match long or short token address, no bueno
         if collateral_address == market['long_token_address'] or \

@@ -151,7 +151,7 @@ class Markets:
             return True
         except KeyError:
 
-            print("{} market not live on GMX yet..".format(index_token_address))
+            #print("{} market not live on GMX yet..".format(index_token_address))
             return False
 
 
