@@ -1,0 +1,8 @@
+rpcs:
+  arbitrum: https://arbitrum.meowrpc.com
+  avalanche: avax_rpc
+chain_ids:
+  arbitrum: 42161
+  avalanche: 43114
+private_key: private_key
+user_wallet_address: user_wallet_address

@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "gmx_python_sdk"
+version = "0.0.11"
+description = "A python based SDK developed for interacting with GMX v2"
+
+authors = [
+  "snipermonke01 <snipermonke01@proton.me>",
+  "alienf33t <alienf33t@yahoo.com>"
+]
+maintainers = [
+  "snipermonke01 <snipermonke01@proton.me>",
+  "alienf33t <alienf33t@yahoo.com>"
+]
+
+repository = "https://github.com/snipermonke01/gmx_python_sdk"
+
+readme = "README.md"
+license = "MIT"
+
+[tool.setuptools.packages.find]
+include = ["gmx_python_sdk", "gmx_python_sdk.*"]
+namespaces = false
+
+[tool.poetry.dependencies]
+python = ">= 3.10.4"
+numpy = ">= 1.26.3"
+hexbytes = ">= 0.3.1"
+web3 = ">= 6.10.0"
+pyyaml = ">= 6.0.1"
+pandas = ">= 1.4.2"
+numerize = ">= 0.12"
+Packaging = ">= 24.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
